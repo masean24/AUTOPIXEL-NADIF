@@ -20,18 +20,36 @@ from services.google_automation_core.proxy_support import (
 logger = logging.getLogger(__name__)
 
 
+def _is_snap_wrapper(path: str) -> bool:
+    """Return True for transitional snap wrapper scripts."""
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore") as handle:
+            sample = handle.read(2048)
+    except Exception:
+        return False
+
+    return "requires the chromium snap" in sample or "/snap/bin/chromium" in sample
+
+
+def _first_real_binary(candidates: list[str]) -> Optional[str]:
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate) and not _is_snap_wrapper(candidate):
+            return candidate
+    return None
+
+
 def _detect_chrome_binary() -> Optional[str]:
     """Detect a Chrome/Chromium binary across Linux/macOS/Windows."""
     import shutil
 
-    chrome_bin = (
-        os.environ.get("CHROME_BIN")
-        or shutil.which("chromium")
-        or shutil.which("chromium-browser")
-        or shutil.which("google-chrome")
-        or shutil.which("chrome")
-        or shutil.which("chrome.exe")
-    )
+    chrome_bin = _first_real_binary([
+        os.environ.get("CHROME_BIN", ""),
+        shutil.which("chromium") or "",
+        shutil.which("chromium-browser") or "",
+        shutil.which("google-chrome") or "",
+        shutil.which("chrome") or "",
+        shutil.which("chrome.exe") or "",
+    ])
 
     if chrome_bin:
         return chrome_bin
@@ -43,7 +61,7 @@ def _detect_chrome_binary() -> Optional[str]:
             os.path.join(os.environ.get("LOCALAPPDATA", ""), "Google", "Chrome", "Application", "chrome.exe"),
         ]
         for candidate in win_candidates:
-            if candidate and os.path.exists(candidate):
+            if candidate and os.path.exists(candidate) and not _is_snap_wrapper(candidate):
                 return candidate
 
     return None
@@ -57,7 +75,10 @@ def resolve_browser_binaries() -> tuple[Optional[str], Optional[str]]:
     import shutil
 
     chrome_bin = _detect_chrome_binary()
-    chromedriver_path = os.environ.get("CHROMEDRIVER_PATH") or shutil.which("chromedriver")
+    chromedriver_path = _first_real_binary([
+        os.environ.get("CHROMEDRIVER_PATH", ""),
+        shutil.which("chromedriver") or "",
+    ])
     return chrome_bin, chromedriver_path
 
 

@@ -1,6 +1,298 @@
+AUTOPIXEL - CARA JALANKAN DARI NOL
+
+Panduan ini dibagi 2:
+1. Windows lokal
+2. VPS Linux
+
+----------------------------------------
+1) SETUP DI WINDOWS
+----------------------------------------
+
+Kebutuhan:
+- Python 3.10 atau lebih baru
+- Google Chrome terbaru
+- Akun Telegram + bot token dari @BotFather
+- Koneksi internet stabil
+
+Langkah:
+
+1. Buka terminal PowerShell di folder project ini.
+
+2. Buat virtual environment:
+
+```powershell
+python -m venv .venv
+```
+
+3. Aktifkan virtual environment:
+
+```powershell
 .venv\Scripts\Activate.ps1
+```
+
+Kalau PowerShell menolak script, jalankan sekali ini dulu:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+4. Install dependency:
+
+```powershell
+pip install -r requirements.txt
+```
+
+5. Buat file `.env` dari `.env.example`:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+6. Isi `.env`:
+
+```env
+TELEGRAM_BOT_TOKEN=ISI_TOKEN_BOT_KAMU
+BOT_HEADER_MEDIA_URL=
+CHROME_BIN=C:\Program Files\Google\Chrome\Application\chrome.exe
+CHROMEDRIVER_PATH=
+PROXY_ENABLED=0
+PROXY_FILE_PATH=
+PROXY_FAILURE_COOLDOWN_SECONDS=90
+PROXY_QUARANTINE_SECONDS=300
+PROXY_QUARANTINE_THRESHOLD=3
+PROXY_PRECHECK_ENABLED=0
+PROXY_PRECHECK_TIMEOUT_SECONDS=12
+```
+
+Catatan:
+- Kalau Chrome ada di lokasi lain, sesuaikan `CHROME_BIN`.
+- Kalau kamu mau pakai proxy, ubah `PROXY_ENABLED=1` dan isi `proxies.txt`.
+- Kalau tidak pakai proxy, biarkan `PROXY_ENABLED=0`.
+
+7. Jalankan bot:
+
+```powershell
 python main.py
+```
 
+Kalau mau langsung pakai Python di venv tanpa activate:
 
-Atau langsung tanpa activate:
+```powershell
 .venv\Scripts\python.exe main.py
+```
+
+8. Buka Telegram, cari bot kamu, lalu kirim `/start`.
+
+----------------------------------------
+2) SETUP DI VPS LINUX
+----------------------------------------
+
+Ada 2 cara:
+- Cara A: Docker, paling gampang dan paling stabil
+- Cara B: Native install di Ubuntu/Debian
+
+----------------------------------------
+2A) VPS LINUX PAKAI DOCKER
+----------------------------------------
+
+Ini direkomendasikan kalau kamu punya akses Docker.
+
+1. Install Docker dan Docker Compose.
+
+2. Clone atau upload project ke VPS.
+
+3. Buat file `.env`:
+
+```bash
+cp .env.example .env
+```
+
+4. Isi `.env`:
+
+```env
+TELEGRAM_BOT_TOKEN=ISI_TOKEN_BOT_KAMU
+BOT_HEADER_MEDIA_URL=
+CHROME_BIN=
+CHROMEDRIVER_PATH=
+PROXY_ENABLED=0
+PROXY_FILE_PATH=
+PROXY_FAILURE_COOLDOWN_SECONDS=90
+PROXY_QUARANTINE_SECONDS=300
+PROXY_QUARANTINE_THRESHOLD=3
+PROXY_PRECHECK_ENABLED=0
+PROXY_PRECHECK_TIMEOUT_SECONDS=12
+```
+
+5. Jalankan container:
+
+```bash
+docker compose up -d --build
+```
+
+6. Cek log:
+
+```bash
+docker compose logs -f
+```
+
+Kalau bot sudah hidup, log akan menunjukkan `Application started`.
+
+----------------------------------------
+2B) VPS LINUX TANPA DOCKER
+----------------------------------------
+
+Untuk Ubuntu/Debian.
+
+1. Update sistem:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+2. Install dependency dasar:
+
+```bash
+sudo apt install -y python3 python3-venv python3-pip git chromium-browser chromium-chromedriver
+```
+
+Catatan:
+- Di beberapa VPS, paket `chromium-browser` bisa berupa wrapper snap dan tidak jalan.
+- Kalau itu terjadi, pakai Docker lebih aman.
+
+3. Masuk ke folder project.
+
+4. Buat virtual environment:
+
+```bash
+python3 -m venv .venv
+```
+
+5. Aktifkan venv:
+
+```bash
+source .venv/bin/activate
+```
+
+6. Install dependency:
+
+```bash
+pip install -r requirements.txt
+```
+
+7. Buat file `.env`:
+
+```bash
+cp .env.example .env
+```
+
+8. Isi `.env`:
+
+```env
+TELEGRAM_BOT_TOKEN=ISI_TOKEN_BOT_KAMU
+BOT_HEADER_MEDIA_URL=
+CHROME_BIN=/usr/bin/chromium-browser
+CHROMEDRIVER_PATH=/usr/bin/chromedriver
+PROXY_ENABLED=0
+PROXY_FILE_PATH=
+PROXY_FAILURE_COOLDOWN_SECONDS=90
+PROXY_QUARANTINE_SECONDS=300
+PROXY_QUARANTINE_THRESHOLD=3
+PROXY_PRECHECK_ENABLED=0
+PROXY_PRECHECK_TIMEOUT_SECONDS=12
+```
+
+Kalau binary Chrome/Chromium kamu ada di lokasi lain, sesuaikan `CHROME_BIN`.
+
+9. Jalankan bot:
+
+```bash
+python main.py
+```
+
+----------------------------------------
+3) PAKAI PROXY
+----------------------------------------
+
+Kalau kamu punya proxy, simpan satu per baris di `proxies.txt`.
+
+Contoh format yang didukung:
+
+```text
+65.111.5.39:3129
+http://ip:port
+http://user:pass@ip:port
+https://user:pass@ip:port
+socks5://ip:port
+ip:port:user:pass
+user:pass@ip:port
+```
+
+Lalu set di `.env`:
+
+```env
+PROXY_ENABLED=1
+PROXY_FILE_PATH=proxies.txt
+PROXY_PRECHECK_ENABLED=1
+```
+
+Saat bot jalan, kamu bisa cek dari Telegram:
+- `/proxy` untuk lihat proxy aktif
+- `/ip` untuk lihat IP yang kepakai
+- `/rotate_proxy` untuk ganti proxy
+- `/disable_proxy` untuk balik ke direct/local IP
+
+----------------------------------------
+4) TANDA BERHASIL RUN
+----------------------------------------
+
+Bot dianggap berhasil jalan kalau di log muncul:
+
+```text
+Application started
+```
+
+Di Telegram, kirim:
+
+```text
+/start
+```
+
+Kalau panel muncul, setup sudah benar.
+
+----------------------------------------
+5) ERROR YANG PALING SERING MUNCUL
+----------------------------------------
+
+1. `TELEGRAM_BOT_TOKEN` salah atau kosong
+- Cek isi `.env`
+
+2. `409 Conflict`
+- Ada lebih dari satu instance bot yang jalan
+- Stop proses lama, lalu jalankan cuma satu instance
+
+3. `Chrome instance exited`
+- Chrome/Chromium tidak cocok atau binary tidak lengkap
+- Di VPS, paling aman pakai Docker
+
+4. Bot stuck di sign-in Google
+- Cek koneksi internet dan proxy
+- Coba `/ip` dan `/proxy`
+- Kalau pakai proxy, pastikan format proxy valid
+
+----------------------------------------
+6) RINGKASAN CEPAT
+----------------------------------------
+
+Windows:
+- Install Python + Chrome
+- `python -m venv .venv`
+- `.venv\Scripts\Activate.ps1`
+- `pip install -r requirements.txt`
+- isi `.env`
+- `python main.py`
+
+VPS Linux:
+- Paling aman: Docker
+- Kalau native, install Python + Chromium + chromedriver
+- isi `.env`
+- jalankan `python main.py`
